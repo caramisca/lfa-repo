@@ -1,13 +1,29 @@
 # Topic: Intro to formal languages. Regular grammars. Finite Automata.
 ## Course: Formal Languages & Finite Automata
 ## Author: Caraman Mihai
-# Overview
-    A formal language can be considered to be the media or the format used to convey information from a sender entity to the one that receives it. The usual components of a language are:
+# Theory
 
-- The alphabet: Set of valid characters;
-- The vocabulary: Set of valid words;
-- The grammar: Set of rules/constraints over the lang.
+#### A formal grammar is a set of rules used to generate strings in a language. It consists of:
 
+- VN (Non-terminals): Symbols that can be replaced (e.g., S, A, B).
+- VT (Terminals): Symbols that appear in the final string (e.g., a, b, c).
+- P (Production rules): Transform non-terminals into sequences of terminals and/or non-terminals.
+- Start Symbol: The initial non-terminal from which the derivation begins.
+
+#### A finite automaton (FA) is a computational model used to recognize patterns in strings. It consists of:
+
+- Q (States): A finite set of states.
+- Σ (Alphabet): A finite set of input symbols.
+- δ (Transition function): Defines state changes based on input symbols.
+- q₀ (Start state): The state where execution begins.
+- F (Final states): Accepting states that determine if a string is valid.
+
+#### Grammar to Finite Automaton Conversion
+- Each non-terminal is treated as a state.
+- Production rules define transitions.
+- Terminal-only transitions lead to final states.
+
+    A finite automaton can verify if a string belongs to a language by following state transitions based on input symbols. If the automaton reaches a final state, the string is accepted.
 
 
 # Objectives:
@@ -44,24 +60,51 @@ A method verifies whether a given string is valid according to the automaton.
 #### Grammar Class
 ```java
 public class Grammar {
-    private Set<String> VN;
-    private Set<String> VT;
-    private Map<String, List<String>> P;
-    private String S;
+    //variables
 
     public Grammar(Set<String> VN, Set<String> VT, Map<String, List<String>> P, String S) {
-        this.VN = VN;
-        this.VT = VT;
-        this.P = P;
-        this.S = S;
+        //basic constructor
     }
 
     public String generateString() {
-        // Generates a valid string
+        StringBuilder result = new StringBuilder();
+        char current = startSymbol;
+
+        while (VN.contains(current)) {
+            List<String> productions = P.get(current);
+            if (productions == null || productions.isEmpty()) break;
+            String selectedProduction = productions.get(new Random().nextInt(productions.size()));
+            result.append(selectedProduction.charAt(0));
+
+            if (selectedProduction.length() > 1)
+                current = selectedProduction.charAt(1);
+            else
+                break;
+        }
+        return result.toString();
     }
 
     public FiniteAutomaton toFiniteAutomaton() {
-        // Conversion logic to Finite automata
+       // states, sigma , transition
+
+        for (var entry : P.entrySet()) {
+            String fromState = String.valueOf(entry.getKey());
+            states.add(fromState);
+            transitions.putIfAbsent(fromState, new HashMap<>());
+
+            for (String production : entry.getValue()) {
+                char terminal = production.charAt(0);
+                String toState = (production.length() > 1) ? String.valueOf(production.charAt(1)) : "FINAL";
+
+                transitions.get(fromState).put(terminal, toState);
+                states.add(toState);
+                if (!VN.contains(toState.charAt(0))) {
+                    finalStates.add(toState);
+                }
+            }
+        }
+
+        return new FiniteAutomaton(states, sigma, transitions, startState, finalStates);
     }
 }
 ```
@@ -69,18 +112,10 @@ public class Grammar {
 #### FiniteAutomaton Class
 ```java
 class FiniteAutomaton {
-    private Set<String> states;
-    private Set<Character> sigma;
-    private Map<String, Map<Character, String>> transitions;
-    private String startState;
-    private Set<String> finalStates;
+    // variables, terminals, transitions and states
 
     public FiniteAutomaton(Set<String> states, Set<Character> sigma, Map<String, Map<Character, String>> transitions, String startState, Set<String> finalStates) {
-        this.states = states;
-        this.sigma = sigma;
-        this.transitions = transitions;
-        this.startState = startState;
-        this.finalStates = finalStates;
+        //contructor
     }
 
     public boolean stringBelongToLanguage(String input) {
@@ -101,12 +136,7 @@ class FiniteAutomaton {
 ```java
 public class Main {
     public static void main(String[] args) {
-        Set<Character> VN = new HashSet<>(Arrays.asList('S', 'D', 'R'));
-        Set<Character> VT = new HashSet<>(Arrays.asList('a', 'b', 'c', 'd', 'f'));
-        Map<Character, List<String>> P = new HashMap<>();
-        P.put('S', Arrays.asList("aS", "bD", "fR"));
-        P.put('D', Arrays.asList("cD", "dR", "d"));
-        P.put('R', Arrays.asList("bR", "f"));
+        // VN, VT and P rules
 
         Grammar grammar = new Grammar(VN, VT, P, 'S');
 
@@ -116,10 +146,7 @@ public class Main {
         }
 
         FiniteAutomaton fa = grammar.toFiniteAutomaton();
-        System.out.println("\nChecking if words belong to language:");
-        System.out.println("abD -> " + fa.stringBelongToLanguage("abD"));
-        System.out.println("acf -> " + fa.stringBelongToLanguage("acf"));
-        System.out.println("ad -> " + fa.stringBelongToLanguage("ad"));
+        //checks
     }
 }
 ```
