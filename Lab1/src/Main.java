@@ -19,8 +19,8 @@ public class Main {
 
         FiniteAutomaton fa = grammar.toFiniteAutomaton();
         System.out.println("\nChecking if words belong to language:");
-        System.out.println("abD -> " + fa.stringBelongToLanguage("abD"));
-        System.out.println("acf -> " + fa.stringBelongToLanguage("acf"));
+        System.out.println("abcd -> " + fa.stringBelongToLanguage("abcd"));
+        System.out.println("ff -> " + fa.stringBelongToLanguage("ff"));
         System.out.println("ad -> " + fa.stringBelongToLanguage("ad"));
     }
 }

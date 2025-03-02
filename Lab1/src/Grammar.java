@@ -1,9 +1,9 @@
 import java.util.*;
 
 class Grammar {
-    private Set<Character> VN; // Variabile neterminale
-    private Set<Character> VT; // Simboluri terminale
-    private Map<Character, List<String>> P; // Producții
+    private Set<Character> VN;
+    private Set<Character> VT;
+    private Map<Character, List<String>> P;
     private char startSymbol;
 
     public Grammar(Set<Character> VN, Set<Character> VT, Map<Character, List<String>> P, char startSymbol) {
@@ -24,9 +24,9 @@ class Grammar {
             result.append(selectedProduction.charAt(0));
 
             if (selectedProduction.length() > 1)
-                current = selectedProduction.charAt(1); // Continuă cu următorul simbol
+                current = selectedProduction.charAt(1);
             else
-                break; // Termină generarea dacă e simbol terminal
+                break;
         }
         return result.toString();
     }
