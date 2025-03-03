@@ -72,146 +72,137 @@ For this lab, the finite automaton is defined as follows:
 The Main class instantiates the NDFA for Variant 3, displays its properties, converts it to a DFA, and then displays the result. This serves as a client to demonstrate the functionality of the FA conversion.
 
 
-## Code Snippets
+# Code Snippets
 
-#### FiniteAutomaton Class
+## **FiniteAutomaton Class**
+
+### Attributes
+- **`states`**: Set of states in the automaton.
+- **`alphabet`**: Set of input symbols (characters).
+- **`transitions`**: Mapping of states and symbols to the set of possible next states.
+- **`startState`**: The initial state.
+- **`finalStates`**: Set of accepting (final) states.
+
+### 1. **`isDeterministic()` Method**
+
+This method checks if the finite automaton is deterministic (DFA) by verifying if any transition from a state leads to **more than one** destination state.
+
+#### Principle:
+In a DFA, each state and input symbol pair must have **exactly one** next state. If any symbol leads to **multiple** states, the automaton is **non-deterministic**.
+
 ```java
-import java.util.*;
-
-class FiniteAutomaton {
-    // set variables for states, alphabet, transitions, start and final state
-
-    public FiniteAutomaton(Set<String> states, Set<Character> alphabet,
-                           Map<String, Map<Character, Set<String>>> transitions,
-                           String startState, Set<String> finalStates) {
-        //basic constructor
-    }
-
-    public boolean isDeterministic() {
-        for (var trans : transitions.values()) {
-            for (var targets : trans.values())
-                if (targets.size() > 1) return false;
-        }
-        return true;
-    }
-
-    // Converts an NDFA to a DFA using the subset construction algorithm.
-    public FiniteAutomaton toDFA() {
-        Map<Set<String>, String> stateMapping = new HashMap<>();
-        Set<String> newStates = new HashSet<>();
-        Map<String, Map<Character, String>> dfaTrans = new HashMap<>();
-        Set<String> newFinalStates = new HashSet<>();
-
-        Queue<Set<String>> queue = new LinkedList<>();
-        Set<String> startSet = epsilonClosure(Collections.singleton(startState));
-        queue.add(startSet);
-        String dfaStart = getStateName(startSet);
-        newStates.add(dfaStart);
-        stateMapping.put(startSet, dfaStart);
-        if (!Collections.disjoint(startSet, finalStates))
-            newFinalStates.add(dfaStart);
-
-        while (!queue.isEmpty()) {
-            Set<String> currSet = queue.poll();
-            String currName = stateMapping.get(currSet);
-            Map<Character, String> currDfaTrans = new HashMap<>();
-
-            for (char symbol : alphabet) {
-                Set<String> nextSet = new HashSet<>();
-                for (String s : currSet)
-                    if (transitions.containsKey(s) && transitions.get(s).containsKey(symbol))
-                        nextSet.addAll(transitions.get(s).get(symbol));
-                nextSet = epsilonClosure(nextSet);
-                if (!nextSet.isEmpty()) {
-                    String nextName = stateMapping.computeIfAbsent(nextSet, k -> getStateName(k));
-                    currDfaTrans.put(symbol, nextName);
-                    if (newStates.add(nextName)) { // New state found
-                        queue.add(nextSet);
-                        if (!Collections.disjoint(nextSet, finalStates))
-                            newFinalStates.add(nextName);
-                    }
-                }
-            }
-            dfaTrans.put(currName, currDfaTrans);
-        }
-        // Convert DFA transitions to the original format.
-        return new FiniteAutomaton(newStates, alphabet,
-            convertToDfaTransitions(dfaTrans), dfaStart, newFinalStates);
-    }
-
-    // Computes the epsilon closure (if ε-transitions exist).
-    private Set<String> epsilonClosure(Set<String> states) {
-        Set<String> closure = new HashSet<>(states);
-        Stack<String> stack = new Stack<>();
-        stack.addAll(states);
-        while (!stack.isEmpty()) {
-            String state = stack.pop();
-            if (transitions.containsKey(state) && transitions.get(state).containsKey('ε')) {
-                for (String t : transitions.get(state).get('ε'))
-                    if (closure.add(t)) stack.push(t);
-            }
-        }
-        return closure;
-    }
-
-    // Combines state names (sorted) into a single string.
-    private String getStateName(Set<String> stateSet) {
-        return String.join("_", new TreeSet<>(stateSet));
-    }
-
-    // Converts DFA transition mapping to the original format.
-    private Map<String, Map<Character, Set<String>>> convertToDfaTransitions(
-            Map<String, Map<Character, String>> dfaTrans) {
-        Map<String, Map<Character, Set<String>>> result = new HashMap<>();
-        for (var entry : dfaTrans.entrySet()) {
-            Map<Character, Set<String>> inner = new HashMap<>();
-            for (var innerEntry : entry.getValue().entrySet())
-                inner.put(innerEntry.getKey(), Collections.singleton(innerEntry.getValue()));
-            result.put(entry.getKey(), inner);
-        }
-        return result;
-    }
-
-    // Displays the FA components.
-    public void display() {
-        //prints basically
-    }
-}
-
-
-```
-
-#### Main Class
-```java
-public class Main {
-    public static void main(String[] args) {
-        // Define states, alphabet and transitions according to Variant...
-
-        String startState = "q0";
-        Set<String> finalStates = Set.of("q4");
-
-        FiniteAutomaton ndfa = new FiniteAutomaton(states, alphabet, transitions, startState, finalStates);
-
-        System.out.println("Original NDFA (Variant 3):");
-        ndfa.display();
-
-        System.out.println("\nDeterminism Check:");
-        if (ndfa.isDeterministic()) {
-            System.out.println("The automaton is deterministic.");
-        } else {
-            System.out.println("The automaton is non-deterministic. Converting to DFA...");
-            FiniteAutomaton dfa = ndfa.toDFA();
-            System.out.println("\nConverted DFA:");
-            dfa.display();
+for (Map<Character, Set<String>> stateTransitions : transitions.values()) {
+    for (Set<String> destStates : stateTransitions.values()) {
+        if (destStates.size() > 1) {
+            return false; // NDFA found
         }
     }
 }
-
+return true; 
 ```
+
+### 2. **`toDFA()` Method**
+
+This method implements the **subset construction algorithm** to convert an NDFA to an equivalent DFA.
+
+#### Principle:
+Each DFA state represents a **set of NDFA states**. By tracking how sets of NDFA states transition under each input symbol, we construct the DFA.
+
+#### Process Flow:
+1. **Initialize**:
+   - Create a queue for unmarked states.
+   - Add the initial state of the NDFA as the starting DFA state.
+
+2. **Process States**:
+   - For each unmarked DFA state:
+     - Compute the next state for each input symbol.
+     - If the new state is unseen, add it to the DFA.
+
+3. **Handle Final States**:
+   - If any NDFA final state appears in a DFA state, mark it as a DFA final state.
+
+```java
+Set<String> initialState = new HashSet<>(Collections.singleton(startState));
+dfaStates.add(initialState);
+
+Queue<Set<String>> unmarkedStates = new LinkedList<>();
+unmarkedStates.add(initialState);
+
+while (!unmarkedStates.isEmpty()) {
+    Set<String> currentState = unmarkedStates.poll();
+    Map<Character, Set<String>> currentTransitions = new HashMap<>();
+
+    for (char symbol : alphabet) {
+        Set<String> newState = new HashSet<>();
+        for (String state : currentState) {
+            if (transitions.containsKey(state) && transitions.get(state).containsKey(symbol)) {
+                newState.addAll(transitions.get(state).get(symbol));
+            }
+        }
+
+        if (!newState.isEmpty() && !dfaStates.contains(newState)) {
+            dfaStates.add(newState);
+            unmarkedStates.add(newState);
+        }
+
+        currentTransitions.put(symbol, newState);
+    }
+
+    dfaTransitions.put(currentState, currentTransitions);
+}
+```
+
+### 3. **`getGrammarType()` Method**
+
+Identifies the automaton as recognizing a **Type-3 grammar** (regular grammar) according to the **Chomsky hierarchy**.
+
+```java
+public String getGrammarType() {
+    return "Regular Grammar (Type-3)";
+}
+```
+
+---
+
+## **DFA Class**
+
+The `DFA` class models the deterministic automaton resulting from the conversion.
+
+### Attributes
+- **`states`**: Set of DFA states (each state represents a set of NDFA states).
+- **`alphabet`**: Input alphabet.
+- **`transitions`**: Transition map for each DFA state.
+- **`startState`**: Initial DFA state.
+- **`finalStates`**: Set of accepting states.
+
+### `toString()` Method
+
+This method provides a readable representation of the DFA:
+
+---
+
+## **Main Class**
+
+### Overview
+1. **Defines an NDFA** with states, alphabet, transitions, start state, and final states.
+2. **Determines** whether the automaton is deterministic.
+3. **Converts** the NDFA to a DFA if necessary.
+4. **Displays** the resulting DFA and grammar classification.
+
+```java
+FiniteAutomaton fa = new FiniteAutomaton(states, alphabet, transitions, startState, finalStates);
+System.out.println("Automaton Type: " + (fa.isDeterministic() ? "DFA" : "NDFA"));
+
+DFA dfa = fa.toDFA();
+System.out.println("\n" + dfa);
+
+System.out.println("\nGrammar Classification: " + fa.getGrammarType());
+```
+
+---
 
 ## Screenshots
-![Screenshot 2025-03-02 185951](https://github.com/user-attachments/assets/27823ce8-49f1-4abc-961d-42472ba7ceb6)
-
+![Screenshot 2025-03-03 082551](https://github.com/user-attachments/assets/5f3be8bc-9f83-4572-b1cb-671e99be992c)
 
 ## Results
 - NDFA Definition: Implemented the finite automaton for Variant 3.
@@ -220,6 +211,11 @@ public class Main {
 - Chomsky Hierarchy: The project lays the foundation for further extensions (e.g., grammar classification) linking finite automata to regular grammars (Type-3) within the Chomsky hierarchy.
 - Graphical Representation: (Optional bonus) Visual representation can be generated using external tools/libraries.
 
+## Conclusion
+
+This project demonstrates the conversion of a non-deterministic finite automaton into a deterministic one using the subset construction algorithm. Additionally, it shows the derivation of a regular grammar from the automaton, reaffirming its position within the Chomsky hierarchy (Type 3). The modular design allows for easy extensions, such as adding graphical representations or further testing.
+
+---
 ## References
 
 - Hopcroft E. and others. Introduction to Automata Theory, Languages and Computation
