@@ -109,17 +109,31 @@ This method implements the **subset construction algorithm** to convert an NDFA 
 Each DFA state represents a **set of NDFA states**. By tracking how sets of NDFA states transition under each input symbol, we construct the DFA.
 
 #### Process Flow:
-1. **Initialize**:
+
+1. **Initialize:**
+
    - Create a queue for unmarked states.
    - Add the initial state of the NDFA as the starting DFA state.
 
-2. **Process States**:
-   - For each unmarked DFA state:
-     - Compute the next state for each input symbol.
-     - If the new state is unseen, add it to the DFA.
+   This step sets up the groundwork for tracking newly discovered DFA states. Each NDFA state is grouped into a composite DFA state. The queue helps manage these new sets as they are discovered but not yet processed.
 
-3. **Handle Final States**:
+2. **Process States:**
+
+   - For each unmarked DFA state:
+      - Compute the next state for each input symbol by following transitions from all states in the current set.
+      - If the new state is unseen, add it to the DFA and mark it for further exploration.
+
+   This loop systematically explores every possible transition, ensuring all reachable states are included. If a new set of NDFA states is encountered, it is added to the DFA's state collection and further examined.
+
+   Additionally, during this process, we must carefully track and record how each DFA state maps to transitions. By iterating through all input symbols and their corresponding states, we ensure every possible path is captured.
+
+3. **Handle Final States:**
+
    - If any NDFA final state appears in a DFA state, mark it as a DFA final state.
+
+   Since each DFA state is a combination of NDFA states, if **any** NDFA final state is included in a DFA state, that DFA state also becomes an accepting state. This ensures the DFA correctly recognizes the language of the original NDFA.
+
+   This step is crucial because even if a portion of a DFA state corresponds to an NDFA final state, the DFA must be marked as accepting to maintain equivalence with the original NDFA.
 
 ```java
 Set<String> initialState = new HashSet<>(Collections.singleton(startState));
