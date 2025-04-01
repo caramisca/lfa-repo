@@ -8,7 +8,7 @@ public enum TokenType {
     FILE_PATH,       // File paths, e.g., "input.mp4"
     FOLDER_PATH,     // Generic folder paths
     EQUALS,          // Equals sign (=) for assignments
-    START_COMMAND,   // The starting command (e.g., "start")
+    START_COMMAND,
     PIPE_LINE,       // Represents a pipeline (->)
     QUOTE, // Quote marks for file paths
     SEMICOLON,
