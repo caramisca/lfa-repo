@@ -69,10 +69,10 @@ public enum TokenType {
 }
 ```
 
-### laboratory4.cnf.Main Class 
+### laboratory4.cnf.ast.Main Class 
 
 ```java
-public class laboratory4.cnf.Main {
+public class laboratory4.cnf.ast.Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter a video editing script snippet (Ex: cut, fade, overlay, trim, speed, reverse):");
