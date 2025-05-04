@@ -9,13 +9,12 @@ public class RegexStringGenerator {
         // Given Regular Expressions
         String regex1 = "O(P|Q|R)+2(3|4)";
         String regex2 = "A*B(C|D|E)F(G|H|I)^2";
-        String regex3 = "J+K(L|M|N)*?(P|Q)^3"; // Modified regex for J+K(L|M|N)*O?(P|Q)^3
+        String regex3 = "J+K(L|M|N)*?(P|Q)^3";
 
-        // Generate valid words
         System.out.println("Generated strings:");
-        System.out.println(generateStringFromRegex(regex1));  // Should generate: OPP23, OQQQQ24, etc.
-        System.out.println(generateStringFromRegex(regex2));  // Should generate: AAABCFGG, AAAAAABDFHH, etc.
-        System.out.println(generateStringFromRegex(regex3));  // Should generate: JJKLOPPP, JKNQQQ, etc.
+        System.out.println(generateStringFromRegex(regex1));
+        System.out.println(generateStringFromRegex(regex2));
+        System.out.println(generateStringFromRegex(regex3));
     }
 
     public static String generateStringFromRegex(String regex) {
@@ -48,20 +47,39 @@ public class RegexStringGenerator {
                     if (endIndex != -1) {
                         String options = regex.substring(index + 1, endIndex);
                         String[] choices = options.split("\\|");
+                        String selected = choices[random.nextInt(choices.length)];
 
-                        if (endIndex + 1 < regex.length() && regex.charAt(endIndex + 1) == '+') {
-                            // Handle (P|Q|R)+ correctly -> repeat 1 to 5 times
-                            int repeat = 1 + random.nextInt(5);
-                            char selectedChar = choices[random.nextInt(choices.length)].charAt(0); // Pick one character
-                            result.append(String.valueOf(selectedChar).repeat(repeat)); // Repeat it
-                            index = endIndex + 1; // Move past ')+'
+                        if (endIndex + 1 < regex.length()) {
+                            char next = regex.charAt(endIndex + 1);
+
+                            if (next == '+') {
+                                int repeat = 1 + random.nextInt(5);
+                                result.append(selected.repeat(repeat));
+                                index = endIndex + 1; // skip '+'
+                            } else if (next == '*') {
+                                int repeat = random.nextInt(6);
+                                result.append(selected.repeat(repeat));
+                                index = endIndex + 1; // skip '*'
+                            } else if (next == '^') {
+                                if (endIndex + 2 < regex.length() && Character.isDigit(regex.charAt(endIndex + 2))) {
+                                    int repeat = Character.getNumericValue(regex.charAt(endIndex + 2));
+                                    result.append(selected.repeat(repeat));
+                                    index = endIndex + 2; // skip '^' and digit
+                                } else {
+                                    result.append(selected);
+                                    index = endIndex;
+                                }
+                            } else {
+                                result.append(selected);
+                                index = endIndex;
+                            }
                         } else {
-                            // Normal (X|Y|Z) case -> pick one character
-                            result.append(choices[random.nextInt(choices.length)]);
-                            index = endIndex; // Move past ')'
+                            result.append(selected);
+                            index = endIndex;
                         }
                     }
                     break;
+
 
                 case '^': // Handle (G|H|I)^2 or (P|Q)^3
                     if (index + 1 < regex.length() && Character.isDigit(regex.charAt(index + 1))) {
@@ -74,7 +92,7 @@ public class RegexStringGenerator {
                     }
                     break;
                 case '*':
-                    break; // Already handled before
+                    break;
                 case '?':
                     if (random.nextBoolean()) {
                         result.append('O');
