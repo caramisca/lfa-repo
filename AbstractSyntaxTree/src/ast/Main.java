@@ -31,7 +31,11 @@ class ProgramNode extends ASTNode {
 
     @Override
     public String toString() {
-        return "Program" + statements;
+        StringBuilder sb = new StringBuilder("Program\n");
+        for (StatementNode stmt : statements) {
+            sb.append(stmt.toTreeString("    "));
+        }
+        return sb.toString();
     }
 }
 
@@ -50,10 +54,22 @@ class StatementNode extends ASTNode {
         this.pipeline = pipeline;
     }
 
-    @Override
-    public String toString() {
-        return String.format("Statement(%s %s %s %s -> %s)",
-                startCommand.text, videoIdentifier.text, equals.text, filePath.text, pipeline);
+    public String toTreeString(String indent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(indent).append("Statement\n");
+        sb.append(indent).append("├── StartCommand: ").append(startCommand.text).append("\n");
+        sb.append(indent).append("├── VideoIdentifier: ").append(videoIdentifier.text).append("\n");
+        sb.append(indent).append("├── Equals: ").append(equals.text).append("\n");
+        sb.append(indent).append("├── FilePath: ").append(filePath.text).append("\n");
+        if (pipeline != null) {
+            sb.append(indent).append("└── Pipeline\n");
+            for (int i = 0; i < pipeline.commands.size(); i++) {
+                CommandNode cmd = pipeline.commands.get(i);
+                boolean isLast = (i == pipeline.commands.size() - 1);
+                sb.append(cmd.toTreeString(indent + (isLast ? "    " : "│   "), isLast));
+            }
+        }
+        return sb.toString();
     }
 }
 
@@ -62,11 +78,6 @@ class PipelineNode extends ASTNode {
 
     public PipelineNode(List<CommandNode> commands) {
         this.commands = commands;
-    }
-
-    @Override
-    public String toString() {
-        return commands.toString();
     }
 }
 
@@ -79,9 +90,17 @@ class CommandNode extends ASTNode {
         this.parameters = parameters;
     }
 
-    @Override
-    public String toString() {
-        return String.format("%s %s", command.text, parameters);
+    public String toTreeString(String indent, boolean isLast) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(indent).append(isLast ? "└── " : "├── ").append("Command: ").append(command.text).append("\n");
+        for (int i = 0; i < parameters.size(); i++) {
+            ParameterNode param = parameters.get(i);
+            boolean isLastParam = (i == parameters.size() - 1);
+            sb.append(indent).append(isLast ? "    " : "│   ");
+            sb.append(isLastParam ? "└── " : "├── ");
+            sb.append("Parameter: ").append(param.parameter.text).append(" ").append(param.value.text).append("\n");
+        }
+        return sb.toString();
     }
 }
 
@@ -92,11 +111,6 @@ class ParameterNode extends ASTNode {
     public ParameterNode(Token parameter, Token value) {
         this.parameter = parameter;
         this.value = value;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s %s", parameter.text, value.text);
     }
 }
 
@@ -137,6 +151,7 @@ class Parser {
         }
         return new ProgramNode(statements);
     }
+
 
     private StatementNode parseStatement() {
         Token startCmd = consume(TokenType.START_COMMAND);
@@ -182,9 +197,11 @@ class Parser {
 // ===================== Main.java =====================
 public class Main {
     public static void main(String[] args) {
-        String input = "imp video = \"input.mp4\" -> cut --x 10 --y 20 -> resize --w 1920 --h 1080;";
+        //String input = "imp video = \"input.mp4\" -> cut --x 10 --y 20 -> resize --w 1920 --h 1080;";
         //String input = "imp video = \"in.mp4\";";
         //String input = "imp video = \"in.mp4\" -> cut --x 0 --y 0;";
+        //String input = "imp video = \"input.mp4\" -> speed --lvl 3 -> resize --w 640 --h 360;";
+        String input = "imp video = \"project.mp4\" -> cut --x 0 --y 0 -> resize --w 1920 --h 1080 -> rotate --deg 180 -> fade --lvl 1;";
 
         Lexer lexer = new Lexer(input);
         List<Token> tokens = lexer.tokenize();
